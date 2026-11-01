@@ -1,0 +1,9 @@
+[project]
+name = "banime40-case"
+version = "0.1.0"
+description = "Low-profile 2-piece 3D-printed case for the banime40 v2.0 PCB"
+license = "CC-BY-SA-4.0"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "cadquery>=2.4",
+]
