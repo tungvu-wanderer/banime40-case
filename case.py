@@ -29,29 +29,29 @@ PCB_FRONT_Z = TRAY_H - PCB_T
 
 # --- walls / seam ------------------------------------------------------
 CLEAR = 0.3            # PCB to inner wall
-WALL = 1.6
-OUT = CLEAR + WALL     # PCB edge to outer wall
+SKIRT = 1.2            # top's outer skirt, flush with the tray's outer face
+TONGUE = 0.9           # tray's inner tongue
+LAP_GAP = 0.15         # skirt to tongue
+OUT = CLEAR + TONGUE + LAP_GAP + SKIRT   # PCB edge to outer face on the short ends
 LAP_Z = 2.0            # lap joint depth
-TONGUE_OFF = 1.05      # tray tongue spans offsets CLEAR..TONGUE_OFF
-LIP_OFF = 1.2          # top lip spans offsets LIP_OFF..OUT
-LIP_Z_GAP = 0.2
+SKIRT_Z_GAP = 0.2      # skirt bottom to the rabbet floor
 
-# --- switch hole (from the stock plate) --------------------------------
+# --- switch hole -------------------------------------------------------
 HOLE = 14.2
-NOTCH_W, NOTCH_H = 15.8, 3.3
-NOTCH_Y = 4.45          # notch centre above/below the hole centre
 
-# --- pillars: M2 standoff (O3.15) clamped by two bolts ------------------
+# --- pillars: M2 standoff glued into the top, one bolt up from the tray ---
+STANDOFF_D, STANDOFF_L = 3.15, 12.0
 POCKET_D = 3.4
+SLOT_DEPTH = 4.0              # glued length of the standoff in the top, above the seam
 BOLT_D = 2.5
-HEAD_D = 4.15                 # bolt heads sit proud on the flat outer faces
-FLOOR_UNDER_HEAD = 2.0        # solid between each outer face and the standoff pocket
+CRATER_D = 4.4                # for the O4.15 x 0.9 flat disk head
+CRATER_Z = 1.0                # crater depth; the head bears on the ledge above it
+SLIT_Z = 0.2                  # first ledge layer is a slit, so the round hole bridges onto it
 PILLAR_C = POCKET_D / 2 + CLEAR + 0.8   # pillar centre beyond the PCB edge
 PILLAR_WALL = POCKET_D / 2 + 1.2        # material from pillar centre to outer face
 LONG_OUT = PILLAR_C + PILLAR_WALL       # PCB edge to outer face on the long edges
 PILLAR_X = [5.0, PCB_W / 2, PCB_W - 5.0]
 PILLARS = [(x, y) for x in PILLAR_X for y in (-PILLAR_C, PCB_H + PILLAR_C)]
-LIP_GAP_XY = 0.15
 
 # --- USB-C -------------------------------------------------------------
 USB_Y = PCB_H - 28.3
@@ -77,19 +77,10 @@ def rrect(off, z0, z1):
             .edges("|Z").fillet(PCB_R + off))
 
 
-def outline(z0, z1):
-    """Outer shape: solid, flush long-edge walls that carry the pillars."""
-    return (box(-OUT, PCB_W + OUT, -LONG_OUT, PCB_H + LONG_OUT, z0, z1)
-            .edges("|Z").fillet(PCB_R + OUT))
-
-
-def pillar_guard(z0, z1):
-    """Keeps the lap joint away from the pillars."""
-    out = None
-    for x, y in PILLARS:
-        c = cyl(x, y, POCKET_D / 2 + 0.8, z0, z1)
-        out = c if out is None else out.union(c)
-    return out
+def orect(d, z0, z1):
+    """Outer shape (solid, flush long-edge walls that carry the pillars) shrunk by `d`."""
+    return (box(-OUT + d, PCB_W + OUT - d, -LONG_OUT + d, PCB_H + LONG_OUT - d, z0, z1)
+            .edges("|Z").fillet(PCB_R + OUT - d))
 
 
 def key_centres():
@@ -98,63 +89,62 @@ def key_centres():
 
 
 def switch_hole(cx, cy):
-    z0, z1 = PLATE_BOT - 0.1, TOTAL_H + 0.1
     h = HOLE / 2
-    cut = box(cx - h, cx + h, cy - h, cy + h, z0, z1)
-    for s in (1, -1):
-        y_mid = cy + s * NOTCH_Y
-        cut = cut.union(box(cx - NOTCH_W / 2, cx + NOTCH_W / 2,
-                            y_mid - NOTCH_H / 2, y_mid + NOTCH_H / 2, z0, z1))
-    return cut
+    return box(cx - h, cx + h, cy - h, cy + h, PLATE_BOT - 0.1, TOTAL_H + 0.1)
 
 
-def pillar_cuts(z_lo, z_hi, pocket_lo, pocket_hi):
-    """Standoff pocket and bolt hole for the pillars in one half (z_lo/z_hi bound the half)."""
+def union_all(parts):
     out = None
-    for x, y in PILLARS:
-        if z_lo == 0:      # tray: bolt hole through the floor
-            hole = cyl(x, y, BOLT_D / 2, -0.1, pocket_lo + 0.1)
-        else:              # top: bolt hole through the plate side
-            hole = cyl(x, y, BOLT_D / 2, pocket_hi - 0.1, z_hi + 0.1)
-        for p in (cyl(x, y, POCKET_D / 2, pocket_lo, pocket_hi), hole):
-            out = p if out is None else out.union(p)
+    for p in parts:
+        out = p if out is None else out.union(p)
     return out
 
 
+def tray_pillar_cuts():
+    """Standoff pocket, bolt hole, and the bottom-face crater with its slit layer."""
+    parts = []
+    for x, y in PILLARS:
+        slit = (box(x - CRATER_D / 2, x + CRATER_D / 2, y - BOLT_D / 2, y + BOLT_D / 2,
+                    CRATER_Z - 0.1, CRATER_Z + SLIT_Z)
+                .intersect(cyl(x, y, CRATER_D / 2, CRATER_Z - 0.1, CRATER_Z + SLIT_Z)))
+        parts += [cyl(x, y, POCKET_D / 2, FLOOR_MAIN, TRAY_H + 0.1),
+                  cyl(x, y, BOLT_D / 2, -0.1, FLOOR_MAIN + 0.1),
+                  cyl(x, y, CRATER_D / 2, -0.1, CRATER_Z),
+                  slit]
+    return union_all(parts)
+
+
+def top_pillar_cuts():
+    """Blind slot the standoff is glued into."""
+    return union_all(cyl(x, y, POCKET_D / 2, TRAY_H - 0.1, TRAY_H + SLOT_DEPTH)
+                     for x, y in PILLARS)
+
+
 def build_tray():
-    body = outline(0, TRAY_H).cut(rrect(CLEAR, FLOOR_MAIN, TRAY_H + 1))
+    body = orect(0, 0, TRAY_H).cut(rrect(CLEAR, FLOOR_MAIN, TRAY_H + 1))
     # thin the floor under the Pro Micro, which hangs down to FLOOR + 0.35
     recess = box(-CLEAR, RECESS_X1, USB_Y - RECESS_HALF_Y, USB_Y + RECESS_HALF_Y,
                  FLOOR, FLOOR_MAIN + 0.1)
     body = body.cut(recess)
     z0 = TRAY_H - LAP_Z
-    # rabbet for the top's lip; closed to the outside under the thick long edges
-    rabbet = (rrect(OUT + 0.1, z0, TRAY_H + 0.1)
-              .cut(rrect(TONGUE_OFF, z0 - 1, TRAY_H + 1))
-              .cut(outline(z0 - 1, TRAY_H + 1).cut(rrect(OUT, z0 - 2, TRAY_H + 2)))
-              .cut(pillar_guard(z0 - 1, TRAY_H + 1)))
-    body = body.cut(rabbet)
-    pocket_lo = FLOOR_UNDER_HEAD
-    body = body.cut(pillar_cuts(0, TRAY_H, pocket_lo, TRAY_H + 0.1))
+    # rabbet for the top's skirt, open to the outside
+    rabbet = (orect(-0.1, z0, TRAY_H + 0.1)
+              .cut(orect(SKIRT + LAP_GAP, z0 - 1, TRAY_H + 1)))
+    body = body.cut(rabbet).cut(tray_pillar_cuts())
     usb = (box(-6, 0, USB_Y - USB_W / 2, USB_Y + USB_W / 2, -1, USB_TOP)
            .edges("|X and >Z").fillet(2.0))
     return body.cut(usb)
 
 
 def build_top():
-    body = outline(TRAY_H, TOTAL_H).cut(rrect(CLEAR, TRAY_H - 1, PLATE_BOT))
+    body = (orect(0, TRAY_H, TOTAL_H).cut(rrect(CLEAR, TRAY_H - 1, PLATE_BOT))
+            .cut(top_pillar_cuts()))
     z0 = TRAY_H - LAP_Z
-    lip = (rrect(OUT, z0 + LIP_Z_GAP, TRAY_H)
-           .cut(rrect(LIP_OFF, z0 - 1, TRAY_H + 1))
-           .cut(pillar_guard(z0 - 1, TRAY_H + 1)))
-    # keep a gap to the tray's outer wall where the long edges are thick
-    for y0, y1 in ((-LONG_OUT, -OUT + LIP_GAP_XY), (PCB_H + OUT - LIP_GAP_XY, PCB_H + LONG_OUT)):
-        lip = lip.cut(box(-OUT - 1, PCB_W + OUT + 1, y0, y1, z0 - 1, TRAY_H + 1))
-    body = body.union(lip)
+    skirt = orect(0, z0 + SKIRT_Z_GAP, TRAY_H).cut(orect(SKIRT, z0 - 1, TRAY_H + 1))
+    body = body.union(skirt)
     for cx, cy in key_centres():
         body = body.cut(switch_hole(cx, cy))
-    pocket_hi = TOTAL_H - FLOOR_UNDER_HEAD
-    return body.cut(pillar_cuts(TRAY_H, TOTAL_H, TRAY_H - 0.1, pocket_hi))
+    return body
 
 
 def to_print_orientation(top):
@@ -169,6 +159,12 @@ def keepouts():
     usb_shell = box(-0.5, 0, USB_Y - 4.5, USB_Y + 4.5, FLOOR + 0.35, FLOOR + 0.35 + 3.4)
     parts_zone = rrect(0, PCB_FRONT_Z - 1.95, PCB_FRONT_Z)   # sockets, diodes
     return pcb.union(pro_micro).union(usb_shell).union(parts_zone)
+
+
+def standoffs():
+    """Standoffs seated at the bottom of the top's slots."""
+    top_z = TRAY_H + SLOT_DEPTH
+    return union_all(cyl(x, y, STANDOFF_D / 2, top_z - STANDOFF_L, top_z) for x, y in PILLARS)
 
 
 # Top-left corner (typing view): corner radius, pillar, lap joint, USB notch, 2x2 key holes.
@@ -195,7 +191,9 @@ def main():
 
     for a, b, label in [(tray, top, "tray/top"),
                         (tray, keepouts(), "tray/PCB+ProMicro"),
-                        (top, keepouts(), "top/PCB+ProMicro")]:
+                        (top, keepouts(), "top/PCB+ProMicro"),
+                        (tray, standoffs(), "tray/standoffs"),
+                        (top, standoffs(), "top/standoffs")]:
         v = a.intersect(b).val().Volume()
         print(f"overlap {label:20s} {v:8.3f} mm3")
 
