@@ -49,7 +49,7 @@ Layout: 4x10 grid, all 40 positions populated. The PCB's six mounting holes, the
 | USB notch | 13 mm wide, open to the bottom face, up to z = 7.2 mm | |
 | Lap joint | 2.0 mm deep, same profile on all four sides | the top's 1.2 mm outer skirt, flush with the tray's outer face, wraps the tray's inner tongue (0.15 mm gap); the tongue is the wall left inside a rabbet 1.35 mm wide |
 | Pillars | 6, at x = 5, 95.25, 185.5 mm on both long edges, 2.8 mm outside the PCB edge | |
-| Pillar tray side | 2.0 mm floor under a standoff pocket O3.4 mm; bolt hole O2.5 mm; bottom-face crater O4.4 x 1.0 mm for the bolt head, with a slit layer (2.5 mm wide, across the crater) before the round hole |
+| Pillar tray side | standoff pocket O3.4 mm with its floor at z = 4.0 mm; bolt hole O2.5 mm through the 3.0 mm ledge under it; bottom-face crater O4.4 x 1.0 mm for the bolt head, with a slit layer (2.5 mm wide, across the crater) before the round hole |
 | Pillar top side | blind slot O3.4 mm, 4.0 mm deep above the seam, 1.2 mm of plate over it; the standoff is glued in | |
 
 All exposed flat faces are multiples of the 0.2 mm layer height.
@@ -62,8 +62,8 @@ All exposed flat faces are multiples of the 0.2 mm layer height.
 
 ## Hardware
 
-- 6 brass M2 female-female round standoffs, O3.15 mm, 12 mm long. Glued 4.0 mm into the top; the lower end stops 0.6 mm above the tray floor, so the seam closes before the standoff end does.
-- 6 M2 flat-disk-head bolts (O4.15 x 0.9 mm head), one per pillar, from the bottom face. M2x6 gives about 4.4 mm of thread in the standoff.
+- 6 brass M2 female-female round standoffs, O3.15 mm, 10 mm long. Glued 4.0 mm into the top; the lower end stops 0.6 mm above the tray's pocket floor, so the seam closes before the standoff end does.
+- 6 M2 flat-disk-head bolts (O4.15 x 0.9 mm head), one per pillar, from the bottom face. M2x8 gives about 4.4 mm of thread in the standoff.
 - Thin rubber feet for the underside. The bolt heads sit 0.1 mm below the bottom face.
 
 ## Assembly

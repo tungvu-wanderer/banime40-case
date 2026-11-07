@@ -40,12 +40,14 @@ SKIRT_Z_GAP = 0.2      # skirt bottom to the rabbet floor
 HOLE = 14.2
 
 # --- pillars: M2 standoff glued into the top, one bolt up from the tray ---
-STANDOFF_D, STANDOFF_L = 3.15, 12.0
+STANDOFF_D, STANDOFF_L = 3.15, 10.0
 POCKET_D = 3.4
 SLOT_DEPTH = 4.0              # glued length of the standoff in the top, above the seam
+STANDOFF_GAP = 0.6            # standoff end to the tray's pocket floor
+POCKET_FLOOR = TRAY_H + SLOT_DEPTH - STANDOFF_L - STANDOFF_GAP   # also the top of the bolt ledge
 BOLT_D = 2.5
 CRATER_D = 4.4                # for the O4.15 x 0.9 flat disk head
-CRATER_Z = 1.0                # crater depth; the head bears on the ledge above it
+CRATER_Z = 1.0                # crater depth; the head bears on the ledge from here to POCKET_FLOOR
 SLIT_Z = 0.2                  # first ledge layer is a slit, so the round hole bridges onto it
 PILLAR_C = POCKET_D / 2 + CLEAR + 0.8   # pillar centre beyond the PCB edge
 PILLAR_WALL = POCKET_D / 2 + 1.2        # material from pillar centre to outer face
@@ -107,8 +109,8 @@ def tray_pillar_cuts():
         slit = (box(x - CRATER_D / 2, x + CRATER_D / 2, y - BOLT_D / 2, y + BOLT_D / 2,
                     CRATER_Z - 0.1, CRATER_Z + SLIT_Z)
                 .intersect(cyl(x, y, CRATER_D / 2, CRATER_Z - 0.1, CRATER_Z + SLIT_Z)))
-        parts += [cyl(x, y, POCKET_D / 2, FLOOR_MAIN, TRAY_H + 0.1),
-                  cyl(x, y, BOLT_D / 2, -0.1, FLOOR_MAIN + 0.1),
+        parts += [cyl(x, y, POCKET_D / 2, POCKET_FLOOR, TRAY_H + 0.1),
+                  cyl(x, y, BOLT_D / 2, -0.1, POCKET_FLOOR + 0.1),
                   cyl(x, y, CRATER_D / 2, -0.1, CRATER_Z),
                   slit]
     return union_all(parts)
