@@ -45,8 +45,9 @@ POCKET_D = 3.4
 SLOT_DEPTH = 4.0              # glued length of the standoff in the top, above the seam
 STANDOFF_GAP = 0.6            # standoff end to the tray's pocket floor
 POCKET_FLOOR = TRAY_H + SLOT_DEPTH - STANDOFF_L - STANDOFF_GAP   # also the top of the bolt ledge
-BOLT_D = 2.5
-CRATER_D = 4.0                # 90 deg countersink mouth; M2 flat head is O3.6 +-0.3
+BOLT_D = 2.3
+CRATER_D = 4.0                # countersink mouth; M2 flat head is O3.6 +-0.3
+CRATER_STRAIGHT = 0.6         # straight section before the 90 deg cone, so the head sits ~0.8 deep
 CRATER_H = (CRATER_D - BOLT_D) / 2   # cone height down to the bolt hole
 PILLAR_C = POCKET_D / 2 + CLEAR + 0.8   # pillar centre beyond the PCB edge
 PILLAR_WALL = POCKET_D / 2 + 1.2        # material from pillar centre to outer face
@@ -105,12 +106,12 @@ def tray_pillar_cuts():
     """Standoff pocket, bolt hole, and the bottom-face countersink."""
     parts = []
     for x, y in PILLARS:
-        # cone continued 0.1 below the face so the cut leaves a clean edge
-        cone = (cq.Workplane("XY").workplane(offset=-0.1).center(x, y)
-                .circle(CRATER_D / 2 + 0.1).workplane(offset=CRATER_H + 0.1)
+        cone = (cq.Workplane("XY").workplane(offset=CRATER_STRAIGHT).center(x, y)
+                .circle(CRATER_D / 2).workplane(offset=CRATER_H)
                 .circle(BOLT_D / 2).loft(combine=True))
         parts += [cyl(x, y, POCKET_D / 2, POCKET_FLOOR, TRAY_H + 0.1),
                   cyl(x, y, BOLT_D / 2, -0.1, POCKET_FLOOR + 0.1),
+                  cyl(x, y, CRATER_D / 2, -0.1, CRATER_STRAIGHT),
                   cone]
     return union_all(parts)
 

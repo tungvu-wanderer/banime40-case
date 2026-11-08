@@ -49,7 +49,7 @@ Layout: 4x10 grid, all 40 positions populated. The PCB's six mounting holes, the
 | USB notch | 13 mm wide, open to the bottom face, up to z = 7.2 mm | |
 | Lap joint | 2.0 mm deep, same profile on all four sides | the top's 1.2 mm outer skirt, flush with the tray's outer face, wraps the tray's inner tongue (0.15 mm gap); the tongue is the wall left inside a rabbet 1.35 mm wide. The skirt bottoms out on the rabbet floor, and the tongue top sits 0.2 mm below the seam, so the clearance is hidden inside |
 | Pillars | 6, at x = 5, 95.25, 185.5 mm on both long edges, 2.8 mm outside the PCB edge | |
-| Pillar tray side | standoff pocket O3.4 mm with its floor at z = 4.0 mm; bolt hole O2.5 mm through the 3.0 mm ledge under it; bottom-face 90 deg countersink, O4.0 mm at the face |
+| Pillar tray side | standoff pocket O3.4 mm with its floor at z = 4.0 mm; bolt hole O2.3 mm through the 3.0 mm ledge under it; bottom-face countersink: O4.0 mm straight for 0.6 mm, then a 90 deg cone to the bolt hole |
 | Pillar top side | blind slot O3.4 mm, 4.0 mm deep above the seam, 1.2 mm of plate over it; the standoff is glued in | |
 
 All exposed flat faces are multiples of the 0.2 mm layer height.
@@ -63,8 +63,8 @@ All exposed flat faces are multiples of the 0.2 mm layer height.
 ## Hardware
 
 - 6 brass M2 female-female round standoffs, O3.15 mm, 10 mm long. Glued 4.0 mm into the top; the lower end stops 0.6 mm above the tray's pocket floor, so the seam closes before the standoff end does.
-- 6 M2 countersunk flat-head bolts (head O3.6 +-0.3 mm), one per pillar, from the bottom face. Length includes the head, so M2x8 gives about 3.4 mm of thread in the standoff.
-- Thin rubber feet for the underside. The bolt heads sit 0.05-0.4 mm below the bottom face, depending on the head diameter.
+- 6 M2 countersunk flat-head bolts (head O3.6 +-0.3 mm), one per pillar, from the bottom face. Length includes the head, which sits about 0.8 mm below the face, so M2x8 gives about 4.2 mm of thread in the standoff.
+- Thin rubber feet for the underside. The bolt heads sit 0.65-0.95 mm below the bottom face, depending on the head diameter.
 
 ## Assembly
 
