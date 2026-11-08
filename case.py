@@ -34,7 +34,7 @@ TONGUE = 0.9           # tray's inner tongue
 LAP_GAP = 0.15         # skirt to tongue
 OUT = CLEAR + TONGUE + LAP_GAP + SKIRT   # PCB edge to outer face on the short ends
 LAP_Z = 2.0            # lap joint depth
-SKIRT_Z_GAP = 0.2      # skirt bottom to the rabbet floor
+TONGUE_Z_GAP = 0.2     # tongue top below the seam; the skirt bottoms out on the rabbet floor instead
 
 # --- switch hole -------------------------------------------------------
 HOLE = 14.2
@@ -46,9 +46,8 @@ SLOT_DEPTH = 4.0              # glued length of the standoff in the top, above t
 STANDOFF_GAP = 0.6            # standoff end to the tray's pocket floor
 POCKET_FLOOR = TRAY_H + SLOT_DEPTH - STANDOFF_L - STANDOFF_GAP   # also the top of the bolt ledge
 BOLT_D = 2.5
-CRATER_D = 4.4                # for the O4.15 x 0.9 flat disk head
-CRATER_Z = 1.0                # crater depth; the head bears on the ledge from here to POCKET_FLOOR
-SLIT_Z = 0.2                  # first ledge layer is a slit, so the round hole bridges onto it
+CRATER_D = 4.0                # 90 deg countersink mouth; M2 flat head is O3.6 +-0.3
+CRATER_H = (CRATER_D - BOLT_D) / 2   # cone height down to the bolt hole
 PILLAR_C = POCKET_D / 2 + CLEAR + 0.8   # pillar centre beyond the PCB edge
 PILLAR_WALL = POCKET_D / 2 + 1.2        # material from pillar centre to outer face
 LONG_OUT = PILLAR_C + PILLAR_WALL       # PCB edge to outer face on the long edges
@@ -103,16 +102,16 @@ def union_all(parts):
 
 
 def tray_pillar_cuts():
-    """Standoff pocket, bolt hole, and the bottom-face crater with its slit layer."""
+    """Standoff pocket, bolt hole, and the bottom-face countersink."""
     parts = []
     for x, y in PILLARS:
-        slit = (box(x - CRATER_D / 2, x + CRATER_D / 2, y - BOLT_D / 2, y + BOLT_D / 2,
-                    CRATER_Z - 0.1, CRATER_Z + SLIT_Z)
-                .intersect(cyl(x, y, CRATER_D / 2, CRATER_Z - 0.1, CRATER_Z + SLIT_Z)))
+        # cone continued 0.1 below the face so the cut leaves a clean edge
+        cone = (cq.Workplane("XY").workplane(offset=-0.1).center(x, y)
+                .circle(CRATER_D / 2 + 0.1).workplane(offset=CRATER_H + 0.1)
+                .circle(BOLT_D / 2).loft(combine=True))
         parts += [cyl(x, y, POCKET_D / 2, POCKET_FLOOR, TRAY_H + 0.1),
                   cyl(x, y, BOLT_D / 2, -0.1, POCKET_FLOOR + 0.1),
-                  cyl(x, y, CRATER_D / 2, -0.1, CRATER_Z),
-                  slit]
+                  cone]
     return union_all(parts)
 
 
@@ -132,7 +131,8 @@ def build_tray():
     # rabbet for the top's skirt, open to the outside
     rabbet = (orect(-0.1, z0, TRAY_H + 0.1)
               .cut(orect(SKIRT + LAP_GAP, z0 - 1, TRAY_H + 1)))
-    body = body.cut(rabbet).cut(tray_pillar_cuts())
+    tongue_relief = orect(SKIRT + LAP_GAP, TRAY_H - TONGUE_Z_GAP, TRAY_H + 1)
+    body = body.cut(rabbet).cut(tongue_relief).cut(tray_pillar_cuts())
     usb = (box(-6, 0, USB_Y - USB_W / 2, USB_Y + USB_W / 2, -1, USB_TOP)
            .edges("|X and >Z").fillet(2.0))
     return body.cut(usb)
@@ -142,7 +142,7 @@ def build_top():
     body = (orect(0, TRAY_H, TOTAL_H).cut(rrect(CLEAR, TRAY_H - 1, PLATE_BOT))
             .cut(top_pillar_cuts()))
     z0 = TRAY_H - LAP_Z
-    skirt = orect(0, z0 + SKIRT_Z_GAP, TRAY_H).cut(orect(SKIRT, z0 - 1, TRAY_H + 1))
+    skirt = orect(0, z0, TRAY_H).cut(orect(SKIRT, z0 - 1, TRAY_H + 1))
     body = body.union(skirt)
     for cx, cy in key_centres():
         body = body.cut(switch_hole(cx, cy))
